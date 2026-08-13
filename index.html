@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folio Engine – Interactive Publication Builder</title>
+<link rel="stylesheet" href="styles/engine.css?v=20260810r1">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="topbar">
+    <div class="rail-toggles">
+      <button class="btn sm edit-only" id="btnTogglePages" title="Pages" aria-label="Open pages panel">☰</button>
+      <button class="btn sm edit-only" id="btnTogglePanel" title="Inspector" aria-label="Open inspector panel">⚙</button>
+    </div>
+    <div class="brand">
+      <div class="brand-dot">◈</div>
+      Folio Engine <small>Publication Studio</small>
+      <span class="save-status ok edit-only" id="saveStatus">Saved</span>
+      <span class="reader-badge">Reader Preview</span>
+    </div>
+    <div class="topbar-group edit-only">
+      <div class="mode-toggle">
+        <button id="btnBook" class="active">Book</button>
+        <button id="btnStory">Story</button>
+      </div>
+    </div>
+    <div class="topbar-group">
+      <button class="btn ghost edit-only" id="btnProjects">Projects</button>
+      <button class="btn ghost edit-only" id="btnHelp">Help</button>
+      <div class="menu-wrap edit-only">
+        <button class="btn ghost" id="btnFileMenu" aria-haspopup="true" aria-expanded="false">File ▾</button>
+        <div class="menu" id="fileMenu">
+          <button class="menu-item" id="btnSave">Save now</button>
+          <button class="menu-item" id="btnExport">Export backup (JSON)</button>
+          <button class="menu-item" id="btnImport">Import project…</button>
+        </div>
+      </div>
+      <button class="btn ghost edit-only" id="btnMedia">▣ Media</button>
+      <button class="btn ghost edit-only" id="btnAssistant">✦ Assistant</button>
+      <button class="btn edit-only" id="btnExportHtml">Publish</button>
+      <button class="btn" id="btnFullscreen" title="Toggle fullscreen" aria-label="Toggle fullscreen">⛶</button>
+      <button class="btn primary edit-only" id="btnReader">▶ Preview</button>
+      <button class="btn" id="btnExitReader" style="display:none">Exit Preview</button>
+    </div>
+    <input type="file" id="importInput" accept=".json,application/json" style="display:none">
+  </div>
+
+  <!-- ============ LEFT: PAGES ============ -->
+  <div class="rail-left">
+    <div class="rail-title"><span>Pages</span><button class="icon-btn rail-close" id="btnClosePages" aria-label="Close pages panel">×</button></div>
+    <input class="field" id="pageSearch" placeholder="Find page…" aria-label="Search pages" style="margin-bottom:10px">
+    <div id="thumbList"></div>
+    <button class="add-page" id="btnAddPage">+ Add Page</button>
+  </div>
+
+  <!-- ============ CENTER: STAGE ============ -->
+  <div class="stage" id="stage" data-pubtheme="ivory">
+    <div class="book mode-active" id="book"></div>
+    <div class="story" id="story"></div>
+    <button class="nav-arrow prev" id="navPrev" title="Previous page" aria-label="Previous page">‹</button>
+    <button class="nav-arrow next" id="navNext" title="Next page" aria-label="Next page">›</button>
+    <div class="wm-overlay" id="wmOverlay"></div>
+    <div class="folio-counter" id="folioCounter">01 / 04</div>
+  </div>
+
+  <!-- ============ RIGHT: INSPECTOR ============ -->
+  <aside class="rail-right" aria-label="Publication inspector">
+    <div class="inspector-head">
+      <div><span>Inspector</span><small id="inspectorContext">Page settings</small></div>
+      <button class="icon-btn inspector-close" id="btnCloseInspector" aria-label="Close inspector">×</button>
+    </div>
+    <div class="inspector-tabs" role="tablist" aria-label="Inspector sections">
+      <button role="tab" data-inspector-tab="page" aria-controls="inspectorPage"><i>▤</i><span>Page</span></button>
+      <button role="tab" data-inspector-tab="blocks" aria-controls="inspectorBlocks"><i>＋</i><span>Blocks</span></button>
+      <button role="tab" data-inspector-tab="brand" aria-controls="inspectorBrand"><i>◆</i><span>Brand</span></button>
+      <button role="tab" data-inspector-tab="interactions" aria-controls="inspectorInteractions"><i>◎</i><span>Interact</span></button>
+      <button role="tab" data-inspector-tab="publish" aria-controls="inspectorPublish"><i>↑</i><span>Publish</span></button>
+    </div>
+
+    <div class="inspector-panel" id="inspectorPage" data-inspector-panel="page" role="tabpanel">
+      <div class="inspector-intro"><b>Shape this page</b><span>Title, layout, reading length and position.</span></div>
+      <div class="insp-section">
+        <div class="insp-title">Selected Page</div>
+        <label class="prop-field edit-only"><span>Navigation title</span><input class="field" id="pageTitleInput" placeholder="Page title shown in navigation"></label>
+        <label class="prop-check edit-only"><input type="checkbox" id="pageCoverToggle"> Cover layout (centered hero)</label>
+        <details class="cover-studio edit-only" id="coverStudio">
+          <summary>Cover Studio</summary>
+          <label class="prop-field"><span>Layout preset</span><select class="field" id="coverPreset"><option value="editorial">Editorial center</option><option value="left">Modern left</option><option value="minimal">Minimal lower</option></select></label>
+          <label class="prop-field"><span>Background treatment</span><select class="field" id="coverTreatment"><option value="gradient">Gradient</option><option value="solid">Solid color</option></select></label>
+          <div class="cover-color-row"><label class="prop-field"><span>Color one</span><input class="field" type="color" id="coverColor1" value="#4338ca"></label><label class="prop-field"><span>Color two</span><input class="field" type="color" id="coverColor2" value="#111827"></label></div>
+          <label class="prop-field"><span>Content alignment</span><select class="field" id="coverAlign"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select></label>
+          <label class="prop-field"><span>Vertical position</span><select class="field" id="coverVertical"><option value="center">Center</option><option value="end">Lower</option><option value="start">Upper</option></select></label>
+          <div class="hint" id="coverContrast">Contrast guidance updates from your selected colors.</div>
+          <div style="display:flex;gap:6px"><button class="btn sm ghost" id="btnCoverReset">Reset</button><button class="btn sm" id="btnCoverDuplicate">Use on duplicate page</button></div>
+        </details>
+        <div class="insp-row"><span>Index</span><span class="insp-val" id="inspIndex">1</span></div>
+        <div class="insp-row"><span>Words</span><span class="insp-val" id="inspWords">0</span></div>
+        <div class="insp-row"><span>Estimated read</span><span class="insp-val" id="inspRead">0s</span></div>
+      </div>
+    </div>
+
+    <div class="inspector-panel edit-only" id="inspectorBlocks" data-inspector-panel="blocks" role="tabpanel">
+      <div class="inspector-intro"><b>Build with content blocks</b><span>Search, choose and insert with one click.</span></div>
+      <div class="block-library-tools">
+        <label class="sr-only" for="blockSearch">Search content blocks</label>
+        <input class="field" id="blockSearch" type="search" placeholder="Search blocks…" autocomplete="off">
+        <div class="block-categories" role="group" aria-label="Block categories">
+          <button class="active" data-block-category="all">All</button>
+          <button data-block-category="text">Text</button>
+          <button data-block-category="media">Media</button>
+          <button data-block-category="data">Data</button>
+          <button data-block-category="commercial">Commercial</button>
+          <button data-block-category="publication">Publication</button>
+          <button data-block-category="layout">Layout</button>
+          <button data-block-category="action">Action</button>
+        </div>
+      </div>
+      <div class="recent-blocks" id="recentBlockSection" hidden>
+        <div class="insp-title">Recently used</div>
+        <div class="recent-block-list" id="recentBlocks"></div>
+      </div>
+      <div class="insp-section block-library-section">
+        <div class="insp-title">Block library</div>
+        <div class="blk-gallery" id="blockGallery"></div>
+        <div class="block-library-empty" id="blockLibraryEmpty" hidden>No blocks match this search. Try another term or category.</div>
+      </div>
+      <div class="insp-section">
+        <div class="insp-title">Page structure</div>
+        <div class="hotspot-list" id="blockList"></div>
+        <div id="blockProps"></div>
+      </div>
+    </div>
+
+    <div class="inspector-panel edit-only" id="inspectorBrand" data-inspector-panel="brand" role="tabpanel">
+      <div class="inspector-intro"><b>Make it unmistakably yours</b><span>Publication identity, theme and typography.</span></div>
+      <div class="insp-section">
+        <div class="insp-title">Publication identity</div>
+        <label class="prop-field"><span>Publication title</span><input class="field" id="pubTitle" placeholder="Publication title"></label>
+        <label class="prop-field"><span>Visual theme</span><select class="field" id="pubTheme">
+          <option value="ivory">Ivory — editorial</option>
+          <option value="noir">Noir — cinematic</option>
+          <option value="azure">Azure — modern</option>
+        </select></label>
+      </div>
+      <div class="insp-section">
+        <div class="insp-title">Global publication information</div>
+        <div class="hint">Update repeated business details once. Template-linked fields follow until you edit them directly.</div>
+        <label class="prop-field"><span>Brand or business name</span><input class="field" id="infoBrandName" placeholder="Studio or company"></label>
+        <label class="prop-field"><span>Subtitle / positioning</span><input class="field" id="infoSubtitle" placeholder="A concise positioning line"></label>
+        <label class="prop-field"><span>Email</span><input class="field" id="infoEmail" type="email"></label>
+        <label class="prop-field"><span>Phone</span><input class="field" id="infoPhone" type="tel"></label>
+        <label class="prop-field"><span>Website</span><input class="field" id="infoWebsite"></label>
+        <label class="prop-field"><span>Address</span><textarea class="field" id="infoAddress" rows="2"></textarea></label>
+        <label class="prop-field"><span>Primary call to action</span><input class="field" id="infoCta" placeholder="Book a consultation"></label>
+        <div class="hint" id="infoLinkStatus">Linked fields are in sync.</div>
+      </div>
+      <div class="insp-section">
+        <div class="insp-title">Brand system</div>
+        <label class="prop-field"><span>Accent color</span><input type="color" class="field" id="brandAccent" value="#000000"></label>
+        <div class="cover-color-row"><label class="prop-field"><span>Page background</span><input type="color" class="field" id="brandPage" value="#fdfbf6"></label><label class="prop-field"><span>Viewer background</span><input type="color" class="field" id="brandViewer" value="#0d1017"></label></div>
+        <div class="cover-color-row"><label class="prop-field"><span>Main text</span><input type="color" class="field" id="brandText" value="#26221a"></label><label class="prop-field"><span>Muted text</span><input type="color" class="field" id="brandMuted" value="#6b6353"></label></div>
+        <label class="prop-field"><span>Heading font</span><select class="field" id="brandHead">
+          <option value="">Theme default</option><option value="Georgia, 'Times New Roman', serif">Serif</option><option value="'Segoe UI', Arial, sans-serif">Sans</option><option value="'Courier New', monospace">Mono</option>
+        </select></label>
+        <label class="prop-field"><span>Body font</span><select class="field" id="brandBody">
+          <option value="">Theme default</option><option value="Georgia, 'Times New Roman', serif">Serif</option><option value="'Segoe UI', Arial, sans-serif">Sans</option><option value="'Courier New', monospace">Mono</option>
+        </select></label>
+        <label class="prop-field"><span>Corner radius</span><select class="field" id="brandRadius">
+          <option value="">Theme default</option><option value="0px">Sharp</option><option value="14px">Soft</option><option value="24px">Round</option>
+        </select></label>
+        <label class="prop-field"><span>Font scale</span><select class="field" id="brandScale"><option value="1">Standard</option><option value="0.9">Compact</option><option value="1.1">Large</option></select></label>
+        <label class="prop-field"><span>Spacing density</span><select class="field" id="brandDensity"><option value="1">Comfortable</option><option value="0.82">Compact</option><option value="1.16">Airy</option></select></label>
+        <div class="hint" id="brandContrast">Contrast is checked locally against the selected page colors.</div>
+        <button class="btn sm block" id="btnBrandSave">Save brand preset</button>
+        <button class="btn sm ghost block" id="btnBrandApply">Apply saved preset</button>
+        <button class="btn sm ghost block" id="btnBrandReset">Reset brand</button>
+      </div>
+    </div>
+
+    <div class="inspector-panel edit-only" id="inspectorInteractions" data-inspector-panel="interactions" role="tabpanel">
+      <div class="inspector-intro"><b>Add reader interaction</b><span>Hotspots, access prompts and watermarking.</span></div>
+      <div class="insp-section">
+        <div class="insp-title">Hotspots</div>
+        <button class="btn sm block" id="btnAddHotspot">+ Add Hotspot</button>
+        <div class="hotspot-list" id="hotspotList"></div>
+      </div>
+      <div class="insp-section">
+        <div class="insp-title">Access Prompt</div>
+        <label class="prop-field"><span>Reader password</span><input class="field" id="passInput" type="text" placeholder="Reader password (client-side gate)"></label>
+        <button class="btn sm block" id="btnSetPass">Apply Password</button>
+        <div class="switch-row"><span>Watermark overlay</span><label class="switch"><input type="checkbox" id="wmToggle" aria-label="Enable watermark overlay"><i></i></label></div>
+        <label class="prop-field"><span>Watermark text</span><input class="field" id="wmText" placeholder="Watermark text"></label>
+        <div class="hint">Casual access deterrence only — not encryption or DRM.</div>
+      </div>
+    </div>
+
+    <div class="inspector-panel" id="inspectorPublish" data-inspector-panel="publish" role="tabpanel">
+      <div class="inspector-intro"><b>Finish with confidence</b><span>Preview, quality guidance and export readiness.</span></div>
+      <div class="publish-actions edit-only">
+        <button class="btn primary block" id="btnInspectorPublish">Open Publish Center</button>
+        <button class="btn block" id="btnInspectorPreview">Preview publication</button>
+        <button class="btn ghost block" id="btnInspectorAssistant">Run Publication Assistant</button>
+      </div>
+      <div class="insp-section">
+        <div class="insp-title">Preview Check</div>
+      <div class="dial-wrap">
+        <div class="dial">
+          <svg width="84" height="84" viewBox="0 0 84 84">
+            <defs>
+              <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6366F1"/>
+                <stop offset="100%" stop-color="#22D3EE"/>
+              </linearGradient>
+            </defs>
+            <circle class="dial-track" cx="42" cy="42" r="36"/>
+            <circle class="dial-fill" id="dialFill" cx="42" cy="42" r="36"/>
+          </svg>
+          <div class="dial-num"><b id="scoreVal">0</b><small>Coverage</small></div>
+        </div>
+        <div class="dial-legend">
+          Preview sessions <b id="statViews">0</b><br>
+          Read time <b id="statTime">0s</b><br>
+          Completion <b id="statCompletion">0%</b><br>
+          Hotspot opens <b id="statHotspots">0</b>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn sm" id="btnExportReport">Export Report</button>
+        <button class="btn sm ghost" id="btnResetAnalytics">Reset</button>
+      </div>
+      <div class="hint" style="margin-top:10px">Local quality check of your own preview runs on this device — not visitor analytics. Author editing is never counted.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+
+<!-- ============ EXPORT CENTER ============ -->
+<div class="modal-backdrop" id="exportBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="expTitleH">
+    <h3 id="expTitleH">Publish — Export Center</h3>
+    <p>One self-contained HTML file: viewer, content, and images included. Print to PDF from any browser.</p>
+    <div class="exp-grid">
+      <label class="prop-field"><span>File name</span><input class="field" id="expFilename"></label>
+      <label class="prop-field"><span>Document title</span><input class="field" id="expTitle"></label>
+      <label class="prop-field"><span>Meta description</span><input class="field" id="expDesc" placeholder="Shown in search results and link previews"></label>
+      <label class="prop-field"><span>Author / company</span><input class="field" id="expAuthor"></label>
+      <label class="prop-field"><span>Default mode</span><select class="field" id="expMode"><option value="book">Book</option><option value="story">Story</option></select></label>
+      <label class="prop-field"><span>Start page</span><input class="field" id="expStart" type="number" min="1" value="1"></label>
+      <label class="prop-field"><span>Format</span><select class="field" id="expFormat"><option value="html">Single HTML file</option><option value="zip">Website ZIP (folder + hosting guide)</option></select></label>
+    </div>
+    <div class="hint" id="expHistory"></div>
+    <div class="prop-title">Preflight check</div>
+    <div id="preflightList" class="preflight"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btnExportCancel">Cancel</button>
+      <button class="btn primary" id="btnRunExport">Export HTML</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-backdrop" id="confirmBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn" id="btnConfirmNo">Cancel</button>
+      <button class="btn primary" id="btnConfirmYes">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HOTSPOT MODAL ============ -->
+<div class="modal-backdrop" id="hsModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="hotspotTitle">
+    <h3 id="hotspotTitle">New Hotspot</h3>
+    <p>Add a label and description. The dot will pulse at the position you clicked.</p>
+    <div style="display:flex;gap:8px">
+      <input class="field" id="hsX" type="number" min="2" max="98" placeholder="X %" title="Horizontal position %">
+      <input class="field" id="hsY" type="number" min="2" max="98" placeholder="Y %" title="Vertical position %">
+    </div>
+    <input class="field" id="hsLabel" placeholder="Label (e.g. Price, Feature, Note)">
+    <input class="field" id="hsText" placeholder="Description shown on click">
+    <div class="modal-actions">
+      <button class="btn" id="btnHsCancel">Cancel</button>
+      <button class="btn primary" id="btnHsSave">Add Hotspot</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PASSWORD GATE ============ -->
+<div class="gate" id="gateOverlay">
+  <div class="brand-dot">◈</div>
+  <h2>This publication is protected</h2>
+  <p>Enter the password provided by the publisher.</p>
+  <input class="field" id="gateInput" type="password" placeholder="Password">
+  <button class="btn primary" id="gateBtn">Unlock</button>
+</div>
+
+<!-- ============ PROJECT LIBRARY ============ -->
+<div class="library" id="libraryScreen">
+  <div class="lib-hero">
+    <div class="brand" style="justify-content:center"><div class="brand-dot">◈</div> Folio Engine</div>
+    <div class="hero-kicker">Welcome Studio</div>
+    <h1>Create a professional interactive publication.</h1>
+    <p>Create a publication. Apply your brand. Build visually. Review quality. Export and share — fully offline, with no backend or subscription.</p>
+    <div class="lib-hero-actions">
+      <button class="btn primary" id="btnHeroContinue" style="display:none">Continue last publication</button>
+      <button class="btn primary" id="btnHeroNew">+ Create Publication</button>
+    </div>
+    <div class="lib-quick">
+      <button class="link-btn" id="btnQuickImport">Import project</button>
+      <button class="link-btn" id="btnQuickDocs">Documentation</button>
+      <button class="link-btn" id="btnQuickTour">Walkthrough</button>
+      <button class="link-btn" id="btnQuickHelp">Shortcuts &amp; help</button>
+    </div>
+    <div class="welcome-showcase" aria-label="Actual Folio Engine publication output">
+      <article class="hero-book-spread" aria-label="Product catalog book spread">
+        <div class="hero-page hero-page-cover"><span class="cover-kicker">APERTURE / OBJECTS</span><i class="catalog-object lamp"></i><i class="catalog-object table"></i><strong>Objects,<br>considered.</strong><small>2026 COLLECTION</small></div>
+        <div class="hero-page hero-page-products"><span>FEATURED / 03</span><div class="hero-product-grid"><i></i><i></i><i></i><i></i></div><b>Form meets function.</b><small>Materials · dimensions · trade</small></div>
+      </article>
+      <article class="hero-story-phone" aria-label="Fashion lookbook Story preview"><div class="story-bars"><i></i><i></i><i></i></div><span>NL / 01</span><div class="fashion-figure"></div><b>IN MOTION</b><small>Northline editorial</small></article>
+    </div>
+    <div class="popular-wrap">
+      <div class="popular-head"><b>Popular templates</b><span>Professional structures, ready to customize</span></div>
+      <div class="popular-templates">
+        <button data-popular-template="catalog"><i class="mini-preview catalog"><em></em><em></em><em></em></i><span><b>Luxury Product Catalog</b><small>10 pages · retail &amp; trade</small></span></button>
+        <button data-popular-template="lookbook"><i class="mini-preview lookbook"><em></em><em></em></i><span><b>Fashion Lookbook</b><small>9 pages · labels &amp; stylists</small></span></button>
+        <button data-popular-template="hotel"><i class="mini-preview hotel"><em></em><em></em></i><span><b>Boutique Hotel Guide</b><small>8 pages · stays &amp; travel</small></span></button>
+        <button data-popular-template="company"><i class="mini-preview company"><em></em><em></em><em></em></i><span><b>Company Profile</b><small>9 pages · services &amp; proof</small></span></button>
+        <button data-popular-template="restaurant"><i class="mini-preview restaurant"><em></em><em></em></i><span><b>Restaurant Menu</b><small>8 pages · menu &amp; reservations</small></span></button>
+      </div>
+    </div>
+  </div>
+  <div class="lib-head">
+    <div class="rail-title" style="margin:0">Your Publications</div>
+    <div class="topbar-group">
+      <input class="field lib-search" id="libSearch" placeholder="Search publications…" aria-label="Search publications">
+      <select class="field lib-sort" id="libSort" aria-label="Sort publications">
+        <option value="updated">Recently updated</option>
+        <option value="name">Name A–Z</option>
+        <option value="pages">Most pages</option>
+      </select>
+      <select class="field lib-sort" id="libStatus" aria-label="Filter publications by status">
+        <option value="active">Active</option>
+        <option value="all">All</option>
+        <option value="Draft">Draft</option>
+        <option value="Published">Published</option>
+        <option value="Archived">Archived</option>
+      </select>
+      <button class="btn" id="btnLibImport">Import Project</button>
+      <button class="btn primary" id="btnLibNew">+ New Publication</button>
+    </div>
+  </div>
+  <div class="proj-grid" id="projectGrid"></div>
+  <input type="file" id="libImportInput" accept=".json,application/json" style="display:none">
+</div>
+
+<!-- ============ TEMPLATE CHOOSER ============ -->
+<div class="modal-backdrop" id="tplBackdrop">
+  <div class="modal wizard-modal" role="dialog" aria-modal="true" aria-labelledby="wizardTitle">
+    <div class="wizard-progress" aria-label="Creation progress"><span class="active"></span><span></span><span></span><span></span><span></span><span></span></div>
+    <h3 id="wizardTitle">Choose publication type</h3>
+    <p id="wizardLead">Tell us what you are creating so we can show the strongest starting points.</p>
+    <div id="tplStep1" class="wizard-step">
+      <div class="type-grid">
+        <button class="type-card" data-pubtype="catalog"><i>▦</i><b>Catalogs &amp; Lookbooks</b><span>Products, fashion, furniture and jewelry</span></button>
+        <button class="type-card" data-pubtype="business"><i>◇</i><b>Business &amp; Property</b><span>Profiles, brochures, reports and presentations</span></button>
+        <button class="type-card" data-pubtype="hospitality"><i>⌑</i><b>Hospitality &amp; Travel</b><span>Menus, hotels and destination guides</span></button>
+        <button class="type-card" data-pubtype="creative"><i>✦</i><b>Editorial &amp; Portfolio</b><span>Creative work, architecture and magazines</span></button>
+        <button class="type-card" data-pubtype="blank"><i>＋</i><b>Start Blank</b><span>A clean publication with one guided page</span></button>
+      </div>
+      <div class="modal-actions"><button class="btn" id="btnTplCancel">Cancel</button></div>
+    </div>
+    <div id="tplStep2" class="wizard-step" hidden>
+      <div class="tpl-grid">
+        <button class="tpl-card" data-template="blank" data-type="blank"><i class="tpl-preview blank"></i><b>Blank Publication</b><span>Guided starter · 1 page · core text blocks</span></button>
+        <button class="tpl-card" data-template="catalog" data-type="catalog"><i class="tpl-preview catalog"></i><b>Luxury Product Catalog</b><span>Premium retail · 10 pages · products, grids, comparison</span></button>
+        <button class="tpl-card" data-template="lookbook" data-type="catalog"><i class="tpl-preview lookbook"></i><b>Fashion Editorial Lookbook</b><span>Fashion labels · 9 pages · editorial spreads, spotlight, CTA</span></button>
+        <button class="tpl-card" data-template="furniture" data-type="catalog"><i class="tpl-preview furniture"></i><b>Furniture Catalog</b><span>Design brands · 9 pages · collections, specs, care</span></button>
+        <button class="tpl-card" data-template="jewelry" data-type="catalog"><i class="tpl-preview jewelry"></i><b>Jewelry Catalog</b><span>Studios · 8 pages · pieces, materials, service</span></button>
+        <button class="tpl-card" data-template="company" data-type="business"><i class="tpl-preview company"></i><b>Premium Company Profile</b><span>Teams · 9 pages · mission, services, process</span></button>
+        <button class="tpl-card" data-template="brochure" data-type="business"><i class="tpl-preview brochure"></i><b>Interactive Brochure</b><span>Service firms · 8 pages · proof, offer, next step</span></button>
+        <button class="tpl-card" data-template="realestate" data-type="business"><i class="tpl-preview realestate"></i><b>Real Estate Brochure</b><span>Agents · 8 pages · property, amenities, viewing</span></button>
+        <button class="tpl-card" data-template="report" data-type="business"><i class="tpl-preview report"></i><b>Annual Report</b><span>Organizations · 9 pages · results, metrics, outlook</span></button>
+        <button class="tpl-card" data-template="investor" data-type="business"><i class="tpl-preview investor"></i><b>Investor Presentation</b><span>Founders · 9 pages · problem, model, roadmap</span></button>
+        <button class="tpl-card" data-template="restaurant" data-type="hospitality"><i class="tpl-preview restaurant"></i><b>Modern Restaurant Menu</b><span>Restaurants · 8 pages · story, menu, dietary, visit</span></button>
+        <button class="tpl-card" data-template="hotel" data-type="hospitality"><i class="tpl-preview hotel"></i><b>Boutique Hotel &amp; Travel Guide</b><span>Boutique stays · 8 pages · rooms, local guide, dining</span></button>
+        <button class="tpl-card" data-template="travel" data-type="hospitality"><i class="tpl-preview travel"></i><b>Travel Guide</b><span>Creators · 8 pages · itinerary, tips, essentials</span></button>
+        <button class="tpl-card" data-template="portfolio" data-type="creative"><i class="tpl-preview portfolio"></i><b>Creative Portfolio</b><span>Studios · 8 pages · work, process, contact</span></button>
+        <button class="tpl-card" data-template="architecture" data-type="creative"><i class="tpl-preview architecture"></i><b>Architecture Portfolio</b><span>Practices · 9 pages · projects, approach, team</span></button>
+        <button class="tpl-card" data-template="magazine" data-type="creative"><i class="tpl-preview magazine"></i><b>Magazine</b><span>Editors · 9 pages · features, interview, contents</span></button>
+      </div>
+      <div class="modal-actions"><button class="btn" id="btnWzBackType">← Back</button></div>
+    </div>
+    <div id="tplStep3" class="wizard-step" hidden>
+      <label class="prop-field"><span>Publication title</span><input class="field" id="wzTitle"></label>
+      <label class="prop-field"><span>Accent color</span><input type="color" class="field" id="wzAccent" value="#000000"></label>
+      <label class="prop-field"><span>Heading font</span>
+        <select class="field" id="wzHead">
+          <option value="">Template default</option>
+          <option value="Georgia, 'Times New Roman', serif">Serif</option>
+          <option value="'Segoe UI', Arial, sans-serif">Sans</option>
+          <option value="'Courier New', monospace">Mono</option>
+        </select></label>
+      <div class="modal-actions">
+        <button class="btn" id="btnWzBack">← Back</button>
+        <button class="btn primary" id="btnWzDetails">Publication details →</button>
+      </div>
+    </div>
+    <div id="tplStep4" class="wizard-step" hidden>
+      <label class="prop-field"><span>Author / company</span><input class="field" id="wzAuthor" placeholder="Shown in metadata and review"></label>
+      <label class="prop-field"><span>Description</span><textarea class="field" id="wzDesc" rows="3" placeholder="A concise purpose for this publication"></textarea></label>
+      <label class="prop-field"><span>Default reading mode</span><select class="field" id="wzMode"><option value="book">Book</option><option value="story">Story</option></select></label>
+      <div class="modal-actions"><button class="btn" id="btnWzBackBrand">← Back</button><button class="btn primary" id="btnWzReview">Review setup →</button></div>
+    </div>
+    <div id="tplStep5" class="wizard-step" hidden>
+      <div class="wizard-review" id="wzReview"></div>
+      <div class="modal-actions"><button class="btn" id="btnWzBackDetails">← Back</button><button class="btn primary" id="btnWzPrepare">Confirm structure →</button></div>
+    </div>
+    <div id="tplStep6" class="wizard-step" hidden>
+      <div class="create-ready"><i>✓</i><b>Ready to create</b><span id="wzReadyText">Your publication structure and brand choices are ready.</span></div>
+      <div class="modal-actions"><button class="btn" id="btnWzBackReview">← Back</button><button class="btn primary" id="btnWzCreate">Create Publication</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ASSISTANT ============ -->
+<div class="modal-backdrop" id="assistantBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assistantTitle">
+    <h3 id="assistantTitle">✦ Publication Assistant</h3>
+    <p>Rule-based guidance computed locally from your content — no AI, no network.</p>
+    <div class="preflight" id="assistantList" style="max-height:300px"></div>
+    <div class="modal-actions"><button class="btn" id="btnAssistantClose">Close</button></div>
+  </div>
+</div>
+
+<!-- ============ RENAME MODAL ============ -->
+<div class="modal-backdrop" id="renameBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+    <h3 id="renameTitle">Rename Publication</h3>
+    <input class="field" id="renameInput" placeholder="Publication title">
+    <div class="modal-actions">
+      <button class="btn" id="btnRenameCancel">Cancel</button>
+      <button class="btn primary" id="btnRenameApply">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HELP / SETTINGS ============ -->
+<div class="modal-backdrop" id="helpBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h3 id="helpTitle">Help &amp; Settings</h3>
+    <div class="insp-row"><span>Publications</span><span class="insp-val" id="helpProjects">0</span></div>
+    <div class="insp-row"><span>Storage used</span><span class="insp-val" id="helpStorage">0 MB</span></div>
+    <div class="insp-row"><span>Version</span><span class="insp-val">2.0.1</span></div>
+    <p style="margin-top:12px">Keyboard: ← → turn pages · Esc closes dialogs / exits Preview. Everything is stored locally in this browser — export JSON backups to move or protect your work. The Access Gate is a client-side deterrent, not encryption.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <button class="btn sm" id="btnHelpTour">Replay Walkthrough</button>
+      <button class="btn sm" id="btnHelpSamples">Restore Sample Publications</button>
+      <button class="btn sm danger" id="btnHelpDeleteAll">Delete All Publications</button>
+    </div>
+    <p>Full documentation is included in the <b>documentation</b> folder of this package.</p>
+    <div class="modal-actions"><button class="btn" id="btnHelpClose">Close</button></div>
+  </div>
+</div>
+
+<!-- ============ PROJECT MEDIA LIBRARY ============ -->
+<div class="modal-backdrop" id="mediaBackdrop">
+  <div class="modal media-modal" role="dialog" aria-modal="true" aria-labelledby="mediaTitle">
+    <div class="media-head">
+      <div><h3 id="mediaTitle">Media Library</h3><p>Optimized, reusable project assets stored safely in this browser.</p></div>
+      <button class="icon-btn" id="btnMediaClose" aria-label="Close Media Library">×</button>
+    </div>
+    <div class="media-storage" aria-live="polite"><span><b id="mediaUsage">Calculating…</b><small id="mediaStorageType">IndexedDB storage</small></span><i><em id="mediaUsageBar"></em></i></div>
+    <div class="media-drop" id="mediaDrop" tabindex="0" role="button" aria-label="Upload images">
+      <b>Drop images here</b><span>or choose JPG, PNG, WebP, or GIF files up to 12 MB</span>
+      <button class="btn sm primary" id="btnMediaUpload">Choose images</button>
+      <input type="file" id="mediaInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+    </div>
+    <div class="media-toolbar">
+      <input class="field" id="mediaSearch" type="search" placeholder="Search media…" aria-label="Search media">
+      <select class="field" id="mediaFilter" aria-label="Filter media"><option value="all">All media</option><option value="used">Used</option><option value="unused">Unused</option></select>
+      <select class="field" id="mediaSort" aria-label="Sort media"><option value="newest">Newest</option><option value="name">Name</option><option value="size">File size</option></select>
+    </div>
+    <div class="media-workspace">
+      <div class="media-grid-wrap">
+        <div class="media-progress" id="mediaProgress" hidden><span id="mediaProgressText">Optimizing image…</span><i><em id="mediaProgressBar"></em></i></div>
+        <div class="media-grid" id="mediaGrid"></div>
+        <div class="media-empty" id="mediaEmpty" hidden><b>No media yet</b><span>Upload once, then reuse images across this publication.</span></div>
+      </div>
+      <aside class="media-detail" id="mediaDetail" aria-label="Selected media details">
+        <div class="media-detail-empty">Select an asset to inspect or use it.</div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- ============ WALKTHROUGH TIP ============ -->
+<div class="tour-tip" id="tourTip" role="dialog" aria-label="Walkthrough">
+  <p id="tourText"></p>
+  <div class="tour-foot">
+    <span id="tourCount"></span>
+    <span>
+      <button class="btn sm ghost" id="btnTourSkip">Skip</button>
+      <button class="btn sm primary" id="btnTourNext">Next</button>
+    </span>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Load order matters: core state → shared components → feature modules → orchestrator -->
+<script src="core/media.js?v=20260813r1"></script>
+<script src="core/storage.js?v=20260813r1"></script>
+<script src="core/history.js?v=20260808r2"></script>
+<script src="components/toast.js?v=20260813r1"></script>
+<script src="modules/analytics.js"></script>
+<script src="modules/hotspots.js"></script>
+<script src="modules/media-library.js?v=20260810r1"></script>
+<script src="modules/blocks.js?v=20260730r1"></script>
+<script src="modules/engine-book.js"></script>
+<script src="modules/engine-story.js"></script>
+<script src="modules/editor.js?v=20260808r2"></script>
+<script src="modules/protect.js"></script>
+<script src="modules/projects.js?v=20260730r1"></script>
+<script src="components/tour.js"></script>
+<script src="modules/assistant.js?v=20260808r2"></script>
+<script src="modules/export-standalone.js?v=20260813r1"></script>
+<script src="core/main.js?v=20260730r1"></script>
+</body>
+</html>
